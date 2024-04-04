@@ -68,6 +68,21 @@ def parse_args(phase="train"):
 
     parser = ArgumentParser()
     group = parser.add_argument_group("Training options")
+    group.add_argument(
+        "--prompt",
+        type=str,
+        required=False,
+        default="",
+        help="Bare version's prompt input from param",
+    )
+
+    group.add_argument(
+        "--output_dir",
+        type=str,
+        required=False,
+        default="",
+        help="Bare version's output dir",
+    )
 
     # Assets
     group.add_argument(
@@ -208,7 +223,7 @@ def parse_args(phase="train"):
         cfg.NAME = "debug--" + cfg.NAME
         cfg.LOGGER.WANDB.params.offline = True
         cfg.LOGGER.VAL_EVERY_STEPS = 1
-        
+
     # Resume config
     cfg = resume_config(cfg)
 
