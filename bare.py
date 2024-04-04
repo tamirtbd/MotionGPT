@@ -9,14 +9,13 @@ from mGPT.data.build_data import build_data
 from mGPT.models.build_model import build_model
 from mGPT.config import parse_args
 
-from os import environ
-
 def export_pose_data(data, name, output_data_dir):
     output_path = Path(output_data_dir)
     if (output_data_dir is not None) and output_path.exists():
+        nicename = name.replace(" ", "_")
         # EXPORT CONTROL POINT DATA
-        cpfp = output_path.joinpath(f'{name}_control_points.npy')
-        np.save(cpfp, data)
+        cpfp = output_path.joinpath(f'{nicename}_control_points.npy')
+        np.save(str( cpfp.absolute() ), data)
 
         if len(data.shape) == 4:
             data = data[0]
@@ -32,8 +31,8 @@ def export_pose_data(data, name, output_data_dir):
         r = RRR.from_rotvec(np.array([np.pi, 0.0, 0.0]))
         pose[:, 0] = np.matmul(r.as_matrix().reshape(1, 3, 3), pose[:, 0])
 
-        posefp = output_path.joinpath(f'{name}_pose.npy')
-        np.save(posefp, pose)
+        posefp = output_path.joinpath(f'{nicename}_pose.npy')
+        np.save(str( posefp.absolute() ), pose)
 
 
 cfg = parse_args(phase="webui")  # parse config file
