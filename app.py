@@ -5,6 +5,7 @@ import torch
 import time
 import cv2
 import os
+from os import environ
 import numpy as np
 import pytorch_lightning as pl
 import moviepy.editor as mp
@@ -88,7 +89,32 @@ def motion_token_to_string(motion_token, lengths, codebook_size=512):
     return motion_string
 
 
-def render_motion(data, feats, method='fast'):
+def export_pose_data(data, name):
+    output_data_dir = environ.get('OUTPUT_DIR', None)
+    output_path = Path(output_data_dir)
+    if (output_data_dir is not None) and output_path.exists():
+        # EXPORT CONTROL POINT DATA
+        cpfp = output_path.joinpath(f'{name}_control_points.npy')
+        np.save(cpfp, data)
+
+        if len(data.shape) == 4:
+            data = data[0]
+        data = data - data[0, 0]
+        pose_generator = HybrIKJointsToRotmat()
+        pose = pose_generator(data)
+        pose = np.concatenate([
+            pose,
+            np.stack([np.stack([np.eye(3)] * pose.shape[0], 0)] * 2, 1)
+        ], 1)
+
+        r = RRR.from_rotvec(np.array([np.pi, 0.0, 0.0]))
+        pose[:, 0] = np.matmul(r.as_matrix().reshape(1, 3, 3), pose[:, 0])
+
+        posefp = output_path.joinpath(f'{name}_pose.npy')
+        np.save(posefp, pose)
+
+
+def render_motion(data, feats, method='fast', text=''):
     fname = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(
         time.time())) + str(np.random.randint(10000, 99999))
     video_fname = fname + '.mp4'
@@ -96,6 +122,8 @@ def render_motion(data, feats, method='fast'):
     output_npy_path = os.path.join(output_dir, feats_fname)
     output_mp4_path = os.path.join(output_dir, video_fname)
     np.save(output_npy_path, feats)
+
+    export_pose_data(data, text)
 
     if method == 'slow':
         if len(data.shape) == 4:
@@ -144,7 +172,7 @@ def render_motion(data, feats, method='fast'):
     return output_mp4_path, video_fname, output_npy_path, feats_fname
 
 
-def load_motion(motion_uploaded, method):
+def load_motion(motion_uploaded, method, text):
     file = motion_uploaded['file']
 
     feats = torch.tensor(np.load(file), device=model.device)
@@ -164,7 +192,7 @@ def load_motion(motion_uploaded, method):
     joints = model.datamodule.feats2joints(feats.cpu()).cpu().numpy()
     output_mp4_path, video_fname, output_npy_path, joints_fname = render_motion(
         joints,
-        feats.to('cpu').numpy(), method)
+        feats.to('cpu').numpy(), method), text
 
     motion_uploaded.update({
         "feats": feats,
@@ -182,13 +210,13 @@ def load_motion(motion_uploaded, method):
     return motion_uploaded
 
 
-def add_text(history, text, motion_uploaded, data_stored, method):
-    data_stored = data_stored + [{'user_input': text}]
+def add_text(history, text_raw, motion_uploaded, data_stored, method):
+    data_stored = data_stored + [{'user_input': text_raw}]
 
-    text = f"""<h3>{text}</h3>"""
+    text = f"""<h3>{text_raw}</h3>"""
     history = history + [(text, None)]
     if 'file' in motion_uploaded.keys():
-        motion_uploaded = load_motion(motion_uploaded, method)
+        motion_uploaded = load_motion(motion_uploaded, method, text_raw)
         output_mp4_path = motion_uploaded['motion_video']
         video_fname = motion_uploaded['motion_video_fname']
         output_npy_path = motion_uploaded['motion_joints']
@@ -234,12 +262,10 @@ def add_file(history, file, txt, motion_uploaded):
 
 def bot(history, motion_uploaded, data_stored, method):
 
-    motion_length, motion_token_string = motion_uploaded[
-        "motion_lengths"], motion_uploaded["motion_token_string"]
+    motion_length, motion_token_string = motion_uploaded["motion_lengths"], motion_uploaded["motion_token_string"]
 
     input = data_stored[-1]['user_input']
-    prompt = model.lm.placeholder_fulfill(input, motion_length,
-                                          motion_token_string, "")
+    prompt = model.lm.placeholder_fulfill(input, motion_length, motion_token_string, "")
     data_stored[-1]['model_input'] = prompt
     batch = {
         "length": [motion_length],
@@ -252,8 +278,8 @@ def bot(history, motion_uploaded, data_stored, method):
     out_joints = outputs["joints"][:out_lengths].detach().cpu().numpy()
     out_texts = outputs["texts"][0]
     output_mp4_path, video_fname, output_npy_path, joints_fname = render_motion(
-        out_joints,
-        out_feats.to('cpu').numpy(), method)
+        out_joints, out_feats.to('cpu').numpy(), method, prompt
+    )
 
     motion_uploaded = {
         "feats": None,
@@ -278,19 +304,21 @@ def bot(history, motion_uploaded, data_stored, method):
 
     if '<Motion_Placeholder>' == out_texts:
         response = [
-            Video_Components.format(video_path=output_mp4_path,
-                                    video_fname=video_fname,
-                                    motion_path=output_npy_path,
-                                    motion_fname=joints_fname)
+            Video_Components.format(
+                video_path=output_mp4_path,
+                video_fname=video_fname,
+                motion_path=output_npy_path,
+                motion_fname=joints_fname)
         ]
     elif '<Motion_Placeholder>' in out_texts:
         response = [
             Text_Components.format(
                 msg=out_texts.split("<Motion_Placeholder>")[0]),
-            Video_Components.format(video_path=output_mp4_path,
-                                    video_fname=video_fname,
-                                    motion_path=output_npy_path,
-                                    motion_fname=joints_fname),
+            Video_Components.format(
+                video_path=output_mp4_path,
+                video_fname=video_fname,
+                motion_path=output_npy_path,
+                motion_fname=joints_fname),
             Text_Components.format(
                 msg=out_texts.split("<Motion_Placeholder>")[1]),
         ]
@@ -582,4 +610,4 @@ with gr.Blocks(css=customCSS) as demo:
 demo.queue()
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=8888, debug=True)
+    demo.launch(server_name="0.0.0.0", server_port=8889, debug=True)
