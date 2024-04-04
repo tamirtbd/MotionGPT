@@ -1,0 +1,61 @@
+from flask import Flask, request, jsonify, json
+import subprocess
+from os import environ
+from pathlib import Path
+# from flasgger import Swagger
+
+context = environ.get('CONTEXT')
+
+if context == 'LOCAL':
+    localconf = Path('./configs/local.config')
+
+    if not localconf.exists():
+        print("Local configuration doesn't exist, create one using the ./config/docker.json template")
+        raise FileExistsError()
+
+    with open(localconf.absolute()) as fh:
+        config = json.load(fh)
+else:
+    with open('/config/docker.config') as fh:
+        config = json.load(fh)
+
+outputdir  = config.get('output_dir')
+pythonpath = config.get('python_path')
+repopath   = config.get('repo_path')
+blender_bin_path = config.get('blender_bin')
+blender_script_path = Path(repopath).joinpath('scripts/blender_npy2usd.py')
+blender_scene_path  = Path(repopath).joinpath('assets/smplx_rest_pose.blend')
+
+app = Flask(__name__)
+# swagger = Swagger(app)
+
+@app.route("/run", methods=["POST"])
+def run_script():
+  """
+  This route receives a POST request with the prompt for the MotionGPT repo as an argument.
+  It then runs the script with those arguments and returns the output.
+  """
+  try:
+    # Get arguments from the request body
+    data = request.get_json()
+    prompt = data.get("prompt")
+
+    # Ensure both arguments are present
+    if prompt is None:
+      return jsonify({"error": "Missing prompt"}), 400
+
+    command = f'{pythonpath} {repopath}/bare.py --prompt "{prompt}" --output_dir "{outputdir}"'
+
+    # Run the script using subprocess and capture the output
+    output = subprocess.run(command.split(), capture_output=True, text=True).stdout.strip()
+
+    command = f"blender -b -P scripts/my_script.py -- arg1 arg2 project.blend"
+
+
+    return jsonify({"output": output})
+
+  except Exception as e:
+    return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+  app.run(debug=False, port=8089)
