@@ -1,20 +1,18 @@
-import json
 import os
 from pathlib import Path
 import time
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from rich import get_console
-from rich.table import Table
 from omegaconf import OmegaConf
 from tqdm import tqdm
 from mGPT.config import parse_args
 from mGPT.data.build_data import build_data
 from mGPT.models.build_model import build_model
 from mGPT.utils.logger import create_logger
-import mGPT.render.matplot.plot_3d_global as plot_3d
 
+from os import environ
+from app import export_pose_data
 
 def motion_token_to_string(motion_token, lengths, codebook_size=512):
     motion_string = []
@@ -92,10 +90,15 @@ def load_example_input(txt_path, task, model):
 
             texts.append(
                 line.split('#')[0].replace(
-                    '<motion>', motion_token_string).replace(
-                        '<Motion_Placeholder_s1>', motion_split1).replace(
-                            '<Motion_Placeholder_s2>', motion_split2).replace(
-                                '<Motion_Placeholder_Masked>', motion_masked))
+                    '<motion>', motion_token_string
+                ).replace(
+                '<Motion_Placeholder_s1>', motion_split1
+                ).replace(
+                    '<Motion_Placeholder_s2>', motion_split2
+                ).replace(
+                    '<Motion_Placeholder_Masked>', motion_masked
+                )
+            )
 
     return_dict = {
         'text': texts,
@@ -104,6 +107,7 @@ def load_example_input(txt_path, task, model):
         'motion_token': motion_token,
         'motion_token_string': motion_token_string,
     }
+
     if len(motion_head) > 0:
         return_dict['motion_head'] = motion_head
 
@@ -132,6 +136,7 @@ def main():
             cfg.FOLDER, str(cfg.model.target.split('.')[-2]), str(cfg.NAME), "samples_" + cfg.TIME
         )
     )
+
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info(OmegaConf.to_yaml(cfg))
@@ -180,22 +185,16 @@ def main():
             in_joints_batch = in_joints[b * batch_size:(b + 1) * batch_size]
             batch = {
                 "length":
-                return_dict["motion_lengths"][b * batch_size:(b + 1) *
-                                              batch_size],
+                return_dict["motion_lengths"][b * batch_size:(b + 1) * batch_size],
                 "text":
                 text_batch
             }
             if 'motion_head' in return_dict:
-                batch["motion"] = return_dict['motion_head'][b *
-                                                             batch_size:(b +
-                                                                         1) *
-                                                             batch_size]
+                batch["motion"] = return_dict['motion_head'][  b * batch_size:(b + 1) * batch_size ]
             if 'motion_heading' in return_dict:
-                batch["motion_heading"] = return_dict['motion_heading'][
-                    b * batch_size:(b + 1) * batch_size]
+                batch["motion_heading"] = return_dict['motion_heading'][b * batch_size:(b + 1) * batch_size]
             if 'motion_tailing' in return_dict:
-                batch["motion_tailing"] = return_dict['motion_tailing'][
-                    b * batch_size:(b + 1) * batch_size]
+                batch["motion_tailing"] = return_dict['motion_tailing'][b * batch_size:(b + 1) * batch_size]
 
             outputs = model(batch, task=cfg.model.params.task)
             logger.info('Model forward finished! Start saving results...')
@@ -224,9 +223,6 @@ def main():
 
                 with open(os.path.join(output_dir, f'{id}_out.txt'), 'w') as f:
                     f.write(output_texts[i])
-
-                # pose_vis = plot_3d.draw_to_batch(xyz_in, [''], [os.path.join(output_dir, f'{i}_in.gif')])
-                # pose_vis = plot_3d.draw_to_batch(xyz, [''], [os.path.join(output_dir, f'{i}_out.gif')])
 
     total_time = time.time() - total_time
     logger.info(

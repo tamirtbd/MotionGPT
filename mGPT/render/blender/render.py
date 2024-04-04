@@ -58,16 +58,15 @@ def render(npydata,
         npydata = npydata * smplh_to_mmm_scaling_factor
 
     if is_smplx:
-        smplx_model_male = smplx.create(model_path,
-                                        model_type='smplx',
-                                        gender='male',
-                                        ext='npz',
-                                        num_betas=10,
-                                        flat_hand_mean=True,
-                                        use_pca=False)
-        faces_path = smplx_model_male.faces
-
-    
+        smplx_model_male = smplx.create(
+            model_path,
+            model_type='smplx',
+            gender='male',
+            ext='npz',
+            num_betas=10,
+            flat_hand_mean=True,
+            use_pca=False)
+        faces_path = smplx_model_male.faces  
 
     # Put everything in this folder
     if mode == "video":
@@ -107,12 +106,14 @@ def render(npydata,
                       is_smplx=is_smplx)
     else:
         from .joints import Joints
-        data = Joints(npydata,
-                      gt=gt,
-                      mode=mode,
-                      canonicalize=canonicalize,
-                      always_on_floor=always_on_floor,
-                      jointstype=jointstype)
+        data = Joints(
+            npydata,
+            gt=gt,
+            mode=mode,
+            canonicalize=canonicalize,
+            always_on_floor=always_on_floor,
+            jointstype=jointstype
+        )
 
     # Number of frames possible to render
     nframes = len(data)
