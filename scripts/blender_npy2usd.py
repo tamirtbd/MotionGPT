@@ -4,13 +4,15 @@ from sys import argv
 from mathutils import Matrix
 
 humanml3d_joints = [ 'root', 'RH', 'LH', 'BP', 'RK', 'LK', 'BT', 'RMrot', 'LMrot', 'BLN', 'RF', 'LF', 'BMN', 'RSI', 'LSI', 'BUN', 'RS', 'LS', 'RE', 'LE', 'RW', 'LW' ]
-smplh_joints = ['pelvis, right_hip, left_hip, spine1, right_knee, left_knee, spine3, right_ankle, left_ankle, neck, right_foot, left_foot, jaw, right_collar, left_collar, head, right_shoulder, left_shoulder, right_elbow, left_elbow, right_wrist, left_wrist']
+smplh_joints = 'pelvis, right_hip, left_hip, spine1, right_knee, left_knee, spine3, right_ankle, left_ankle, neck, right_foot, left_foot, jaw, right_collar, left_collar, head, right_shoulder, left_shoulder, right_elbow, left_elbow, right_wrist, left_wrist'.split(', ')
 
 # Get Numpy File Path from cli keyword arguments
-npairs = len(argv) - 1
+clean_argv = argv[5:]
+nargs = len(clean_argv)
 
-apairs = np.array(argv[1:]).reshape((int(npairs/2), 2))
-args = { k[2:]:v for k,v in apairs }
+apairs = np.array(clean_argv).reshape((int(nargs/2), 2))
+args = {k.replace('-',''): v for k, v in apairs}
+print(args)
 
 fp = args['npy_pose_file_path']
 a = np.load(fp)
@@ -39,9 +41,9 @@ for i, f in enumerate( a ):
         pb.keyframe_insert('rotation_quaternion', frame=n)
 
 # Final adjustments to orient character    
-bpy.ops.transform.rotate(value=3.14159, orient_axis='X', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=False, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False, snap=False, snap_elements={'INCREMENT'}, use_snap_project=False, snap_target='CLOSEST', use_snap_self=True, use_snap_edit=True, use_snap_nonedit=True, use_snap_selectable=False, alt_navigation=True)
-bpy.ops.transform.rotate(value=3.14159, orient_axis='Z', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=False, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False, snap=False, snap_elements={'INCREMENT'}, use_snap_project=False, snap_target='CLOSEST', use_snap_self=True, use_snap_edit=True, use_snap_nonedit=True, use_snap_selectable=False, alt_navigation=True)
-bpy.ops.transform.translate(value=(-0, -0, -0.357846), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=False, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False, snap=False, snap_elements={'INCREMENT'}, use_snap_project=False, snap_target='CLOSEST', use_snap_self=True, use_snap_edit=True, use_snap_nonedit=True, use_snap_selectable=False, alt_navigation=True)
+bpy.ops.transform.rotate(value=3.14159, orient_axis='X', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=False, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False, snap=False, snap_elements={'INCREMENT'}, use_snap_project=False, snap_target='CLOSEST', use_snap_self=True, use_snap_edit=True, use_snap_nonedit=True, use_snap_selectable=False)
+bpy.ops.transform.rotate(value=3.14159, orient_axis='Z', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=False, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False, snap=False, snap_elements={'INCREMENT'}, use_snap_project=False, snap_target='CLOSEST', use_snap_self=True, use_snap_edit=True, use_snap_nonedit=True, use_snap_selectable=False)
+bpy.ops.transform.translate(value=(-0, -0, -0.357846), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=False, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False, snap=False, snap_elements={'INCREMENT'}, use_snap_project=False, snap_target='CLOSEST', use_snap_self=True, use_snap_edit=True, use_snap_nonedit=True, use_snap_selectable=False)
 
 # Export USD
 export_path = args['export_path']

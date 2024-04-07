@@ -34,6 +34,8 @@ def export_pose_data(data, name, output_data_dir):
         posefp = output_path.joinpath(f'{nicename}_pose.npy')
         np.save(str( posefp.absolute() ), pose)
 
+        return posefp
+
 
 cfg = parse_args(phase="webui")  # parse config file
 cfg.FOLDER = 'cache'
@@ -69,4 +71,6 @@ out_joints = outputs["joints"][:out_lengths].detach().cpu().numpy()
 
 output_dir = args['output_dir']
 
-export_pose_data(out_joints, input, output_dir)
+savefp = export_pose_data(out_joints, input, output_dir)
+
+print(f"Saved to: [{savefp.absolute()}]")

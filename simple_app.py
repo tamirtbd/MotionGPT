@@ -49,10 +49,21 @@ def run_script():
     # Run the script using subprocess and capture the output
     output = subprocess.run(command.split(), capture_output=True, text=True).stdout.strip()
 
-    command = f"blender -b -P scripts/my_script.py -- arg1 arg2 project.blend"
+    p1 = jsonify({"output": output})
+    npyfile_path = p1.json['output']
+    start = npyfile_path.find('[')+1
+    end   = npyfile_path.find(']')
+    npyfile_path = npyfile_path[start:end]
 
+    # Blender script
+    nicename = prompt.replace(" ", "_")
+    usd_export_path = Path(outputdir).joinpath(f'{nicename}.usd')
+    command = f"{blender_bin_path} {blender_scene_path} -b -P {blender_script_path} --npy_pose_file_path {npyfile_path} --export_path {usd_export_path}"
 
-    return jsonify({"output": output})
+    output = subprocess.run(command.split(), capture_output=True, text=True).stdout.strip()
+    p2 = jsonify({"output": output})
+
+    return {'mGPT' : p1.json, 'USD' : p2.json }
 
   except Exception as e:
     return jsonify({"error": str(e)}), 500
