@@ -1,0 +1,16 @@
+*.txt
+*.gif
+*.mp4
+*.npy
+*.pkl
+*.npz
+*.zip
+*.xz
+deps
+*.pyc
+.ipynb_checkpoints
+*.log
+.idea
+checkpoints
+*.blend1
+results
