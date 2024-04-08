@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, json
+from flask import Flask, request, jsonify, json, send_file
 import subprocess
 from os import environ
 from pathlib import Path
@@ -63,7 +63,14 @@ def run_script():
     output = subprocess.run(command.split(), capture_output=True, text=True).stdout.strip()
     p2 = jsonify({"output": output})
 
-    return {'mGPT' : p1.json, 'USD' : p2.json }
+    debug_data = {'mGPT': p1.json, 'USD': p2.json}
+    usdpath = Path(usd_export_path)
+    if not usdpath.exists():
+        return jsonify({"error": "File not found"}), 404
+
+    return send_file(usd_export_path)
+
+  # TODO: Delete npy and usd file as post process
 
   except Exception as e:
     return jsonify({"error": str(e)}), 500
