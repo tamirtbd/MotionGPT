@@ -49,3 +49,5 @@ bpy.ops.transform.translate(value=(-0, -0, -0.357846), orient_type='GLOBAL', ori
 export_path = args['export_path']
 
 bpy.ops.wm.usd_export(filepath=export_path, export_animation=True, export_normals=False, export_materials=False, export_shapekeys=True)
+
+print(f"Exported USD file to: {export_path}")
