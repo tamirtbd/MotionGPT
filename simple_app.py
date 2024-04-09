@@ -103,8 +103,5 @@ def run_script():
   except Exception as e:
     return jsonify({"error": str(e)}), 500
 
-
-
-
 if __name__ == "__main__":
-  app.run(host=config['host'], debug=False, port=8090)
+  app.run(host=config['host'], debug=False, port=8089)
