@@ -37,8 +37,9 @@ blender_scene_path  = {blender_scene_path}
 
 
 def run_cmd(command):
+    shell = context != 'LOCAL'
     # Run the script using subprocess and capture the output
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=shell)
     # Read and print the output line by line
     outputs = []
     for line in iter(process.stdout.readline, ""):
