@@ -26,6 +26,15 @@ blender_bin_path = config.get('blender_bin')
 blender_script_path = Path(repopath).joinpath('scripts/blender_npy2usd.py')
 blender_scene_path  = Path(repopath).joinpath('assets/smplx_rest_pose.blend')
 
+print(f"""Working with folders:
+outputdir  = {outputdir}
+pythonpath = {pythonpath}
+repopath   = {repopath}
+blender_bin_path = {blender_bin_path} 
+blender_script_path = {blender_script_path}
+blender_scene_path  = {blender_scene_path}
+""")
+
 app = Flask(__name__)
 # swagger = Swagger(app)
 
@@ -44,7 +53,12 @@ def run_script():
     if prompt is None:
       return jsonify({"error": "Missing prompt"}), 400
 
+    print(f"Prompt received: {prompt}")
+
     command = f'{pythonpath} {repopath}/bare.py --prompt "{prompt}" --output_dir "{outputdir}"'
+
+    print("Running MotioGPT with following command:")
+    print(command)
 
     # Run the script using subprocess and capture the output
     output = subprocess.run(command.split(), capture_output=True, text=True).stdout.strip()
@@ -55,18 +69,29 @@ def run_script():
     end   = npyfile_path.find(']')
     npyfile_path = npyfile_path[start:end]
 
+    print("MotionGPT outoput")
+    print(p1.json['output'])
+    print(f"Numpy file: {npyfile_path}")
+
     # Blender script
     nicename = prompt.replace(" ", "_")
     usd_export_path = Path(outputdir).joinpath(f'{nicename}.usd')
     command = f"{blender_bin_path} {blender_scene_path} -b -P {blender_script_path} --npy_pose_file_path {npyfile_path} --export_path {usd_export_path}"
 
+    print("Running Blender with following command:")
+    print(command)
+
     output = subprocess.run(command.split(), capture_output=True, text=True).stdout.strip()
     p2 = jsonify({"output": output})
+
+    print(f"Blender outout: {p2}")
 
     debug_data = {'mGPT': p1.json, 'USD': p2.json}
     usdpath = Path(usd_export_path)
     if not usdpath.exists():
         return jsonify({"error": "File not found"}), 404
+
+    print(f"Sending USD file in path: {usd_export_path}")
 
     return send_file(usd_export_path)
 
