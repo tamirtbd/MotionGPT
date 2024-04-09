@@ -16,7 +16,7 @@ if context == 'LOCAL':
     with open(localconf.absolute()) as fh:
         config = json.load(fh)
 else:
-    with open('/config/docker.config') as fh:
+    with open('./configs/docker.config') as fh:
         config = json.load(fh)
 
 outputdir  = config.get('output_dir')
