@@ -35,6 +35,19 @@ blender_script_path = {blender_script_path}
 blender_scene_path  = {blender_scene_path}
 """)
 
+
+def run_cmd(command):
+    # Run the script using subprocess and capture the output
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    # Read and print the output line by line
+    outputs = []
+    for line in iter(process.stdout.readline, ""):
+        outputs.append(line.rstrip())
+        print(outputs[-1])
+    output = process.wait()
+    return outputs
+
+
 app = Flask(__name__)
 # swagger = Swagger(app)
 
@@ -60,18 +73,12 @@ def run_script():
     print("Running MotioGPT with following command:")
     print(command)
 
-    # Run the script using subprocess and capture the output
-    output = subprocess.run(command.split(), capture_output=True, text=True).stdout.strip()
+    outputs = run_cmd(command)
 
-    p1 = jsonify({"output": output})
-    npyfile_path = p1.json['output']
+    npyfile_path = outputs[1]
     start = npyfile_path.find('[')+1
     end   = npyfile_path.find(']')
     npyfile_path = npyfile_path[start:end]
-
-    print("MotionGPT outoput")
-    print(p1.json['output'])
-    print(f"Numpy file: {npyfile_path}")
 
     # Blender script
     nicename = prompt.replace(" ", "_")
@@ -81,12 +88,8 @@ def run_script():
     print("Running Blender with following command:")
     print(command)
 
-    output = subprocess.run(command.split(), capture_output=True, text=True).stdout.strip()
-    p2 = jsonify({"output": output})
+    outputs = run_cmd(command)
 
-    print(f"Blender outout: {p2}")
-
-    debug_data = {'mGPT': p1.json, 'USD': p2.json}
     usdpath = Path(usd_export_path)
     if not usdpath.exists():
         return jsonify({"error": "File not found"}), 404
@@ -100,5 +103,8 @@ def run_script():
   except Exception as e:
     return jsonify({"error": str(e)}), 500
 
+
+
+
 if __name__ == "__main__":
-  app.run(host=config['host'], debug=False, port=8089)
+  app.run(host=config['host'], debug=False, port=8090)
