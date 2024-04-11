@@ -89,7 +89,7 @@ def run_script():
     # Blender script
     nicename = prompt.replace(" ", "_")
     usd_export_path = Path(outputdir).joinpath(f'{nicename}.usd')
-    command = f"{blender_bin_path} {blender_scene_path} -b -P {blender_script_path} --npy_pose_file_path {npyfile_path} --export_path {usd_export_path}"
+    command = f"{blender_bin_path} {blender_scene_path} -b -P {blender_script_path} --npy_pose_file_path {npyfile_path} --export_path {usd_export_path} --mode {rig_type}"
 
     print("Running Blender with following command:")
     print(command)

@@ -4,7 +4,8 @@ RUN apt-get update
 
 USER root
 
-RUN apt-get install -y wget git git-lfs unzip xz-utils vim libglu1-mesa-dev libxrender1 libxxf86vm-dev libxfixes-dev libxi6 libxkbcommon-x11-0 libsm6 
+RUN apt-get install -y wget git git-lfs unzip xz-utils vim libglu1-mesa-dev libxrender-dev libxrender1 libxxf86vm-dev libxfixes-dev libxi6 libxkbcommon-x11-0 libsm6
+
 
 # Install and set up conda
 RUN mkdir -p ~/miniconda3
