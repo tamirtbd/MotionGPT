@@ -24,7 +24,12 @@ pythonpath = config.get('python_path')
 repopath   = config.get('repo_path')
 blender_bin_path = config.get('blender_bin')
 blender_script_path = Path(repopath).joinpath('scripts/blender_npy2usd.py')
-blender_scene_path  = Path(repopath).joinpath('assets/smplx_rest_pose.blend')
+
+rig_type = config['rig_base']
+if rig_type == 'smplx':
+    blender_scene_path  = Path(repopath).joinpath('assets/smplx_rest_pose.blend')
+else:
+    blender_scene_path = Path(repopath).joinpath('assets/almabase_rest_pose.blend')
 
 print(f"""Working with folders:
 outputdir  = {outputdir}
