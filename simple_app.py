@@ -25,11 +25,9 @@ repopath   = config.get('repo_path')
 blender_bin_path = config.get('blender_bin')
 blender_script_path = Path(repopath).joinpath('scripts/blender_npy2usd.py')
 
-rig_type = config['rig_base']
-if rig_type == 'smplx':
-    blender_scene_path  = Path(repopath).joinpath('assets/smplx_rest_pose.blend')
-else:
-    blender_scene_path = Path(repopath).joinpath('assets/almabase_rest_pose.blend')
+scene_file = config.get('scene_file')
+
+blender_scene_path = Path(repopath).joinpath(f'assets/{scene_file}')
 
 print(f"""Working with folders:
 outputdir  = {outputdir}
@@ -89,7 +87,7 @@ def run_script():
     # Blender script
     nicename = prompt.replace(" ", "_")
     usd_export_path = Path(outputdir).joinpath(f'{nicename}.usd')
-    command = f"{blender_bin_path} {blender_scene_path} -b -P {blender_script_path} --npy_pose_file_path {npyfile_path} --export_path {usd_export_path} --mode {rig_type}"
+    command = f"{blender_bin_path} {blender_scene_path} -b -P {blender_script_path} --npy_pose_file_path {npyfile_path} --export_path {usd_export_path}"
 
     print("Running Blender with following command:")
     print(command)
