@@ -6,7 +6,6 @@ USER root
 
 RUN apt-get install -y wget git git-lfs unzip xz-utils vim libglu1-mesa-dev libxrender-dev libxrender1 libxxf86vm-dev libxfixes-dev libxi6 libxkbcommon-x11-0 libsm6
 
-
 # Install and set up conda
 RUN mkdir -p ~/miniconda3
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
@@ -32,6 +31,7 @@ RUN unzip /home/MotionGPT.zip -d /home
 # RUN git clone https://github.com/tamirtbd/MotionGPT.git /home/MotionGPT
 
 WORKDIR /home/MotionGPT
+RUN git stash 
 RUN git pull
 
 RUN /root/miniconda3/envs/mgpt/bin/pip install -r /home/MotionGPT/requirements.txt
@@ -39,6 +39,9 @@ RUN /root/miniconda3/envs/mgpt/bin/pip install torch torchvision torchaudio --in
 RUN /root/miniconda3/envs/mgpt/bin/pip install gdown flask flasgger bert-score==0.3.13
 
 RUN tar -xJvf /home/blender-4.1.0-linux-x64.tar.xz -C /home
+
+# Install retargeting addon with script
+RUN /home/blender-4.1.0-linux-x64/blender -b -P /home/MotionGPT/scripts/install_and_activate_retargeting.py
 
 EXPOSE 8089/TCP
 
